@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: var(--font-inter);
+    --font-playfair: var(--font-playfair);
+  }
+  
+  body {
+    @apply bg-olive-50 text-olive-900;
+  }
+}
+
+@layer components {
+  .premium-card {
+    @apply bg-white rounded-2xl shadow-premium border border-olive-200;
+  }
+  
+  .premium-card-hover {
+    @apply transition-all duration-300 hover:shadow-premium-lg hover:scale-[1.02];
+  }
+  
+  .btn-primary {
+    @apply bg-olive-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:bg-olive-700 hover:shadow-lg;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-olive-600 px-6 py-3 rounded-xl font-semibold border-2 border-olive-600 transition-all duration-300 hover:bg-olive-50;
+  }
+  
+  .status-completed {
+    @apply text-status-completed font-semibold;
+  }
+  
+  .status-pending {
+    @apply text-status-pending font-semibold;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
