@@ -4,17 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { curriculum, getSubsectionById } from '@/lib/curriculum';
-import { getQuestionsForSubsection } from '@/lib/questionBank';
+import { getQuestionsForSubsection, type QuizQuestion } from '@/lib/questionBank';
+import MiniGraph from '@/components/MiniGraph';
 import { BookOpen, ArrowLeft, CheckCircle, Circle, Play, CheckSquare, XCircle, Award } from 'lucide-react';
 import Image from 'next/image';
-
-interface QuizQuestion {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation: string;
-}
 
 export default function LessonPage() {
   const router = useRouter();
@@ -317,22 +310,23 @@ export default function LessonPage() {
                       </div>
 
                       {/* Options */}
-                      <div className="space-y-3 mb-6">
-                        {currentQuestion.options.map((option, index) => {
-                          const isSelected = selectedAnswers.get(currentQuestion.id) === index;
-                          
-                          return (
-                            <button
-                              key={index}
-                              onClick={() => handleAnswerSelect(currentQuestion.id, index)}
-                              className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                                isSelected
-                                  ? 'border-olive-600 bg-olive-50'
-                                  : 'border-olive-200 hover:border-olive-400 hover:bg-olive-50/50'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      {currentQuestion.optionGraphs ? (
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                          {currentQuestion.optionGraphs.map((graph, index) => {
+                            const isSelected = selectedAnswers.get(currentQuestion.id) === index;
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => handleAnswerSelect(currentQuestion.id, index)}
+                                aria-label={currentQuestion.options[index]}
+                                className={`relative rounded-xl border-2 overflow-hidden transition-all ${
+                                  isSelected
+                                    ? 'border-olive-600 bg-olive-50 shadow-md'
+                                    : 'border-olive-200 hover:border-olive-400 hover:bg-olive-50/50'
+                                }`}
+                              >
+                                <div className={`absolute top-2 left-2 w-6 h-6 rounded-full border-2 z-10 flex items-center justify-center bg-white ${
                                   isSelected
                                     ? 'border-olive-600 bg-olive-600'
                                     : 'border-olive-400'
@@ -341,12 +335,43 @@ export default function LessonPage() {
                                     <CheckSquare className="w-4 h-4 text-white" />
                                   )}
                                 </div>
-                                <span className="text-olive-900">{option}</span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                                <MiniGraph spec={graph} />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="space-y-3 mb-6">
+                          {currentQuestion.options.map((option, index) => {
+                            const isSelected = selectedAnswers.get(currentQuestion.id) === index;
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => handleAnswerSelect(currentQuestion.id, index)}
+                                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                                  isSelected
+                                    ? 'border-olive-600 bg-olive-50'
+                                    : 'border-olive-200 hover:border-olive-400 hover:bg-olive-50/50'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                    isSelected
+                                      ? 'border-olive-600 bg-olive-600'
+                                      : 'border-olive-400'
+                                  }`}>
+                                    {isSelected && (
+                                      <CheckSquare className="w-4 h-4 text-white" />
+                                    )}
+                                  </div>
+                                  <span className="text-olive-900">{option}</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
 
                       {/* Navigation */}
                       <div className="flex gap-3">
