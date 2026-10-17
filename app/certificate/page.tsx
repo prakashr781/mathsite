@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { curriculum } from '@/lib/curriculum';
+import { getProgress, getProgressSummary } from '@/lib/progress';
 import { Award, Download, Home, Trophy, Calendar, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 
@@ -12,7 +14,13 @@ export default function CertificatePage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [completionDate, setCompletionDate] = useState<string>('');
-  const [totalHours, setTotalHours] = useState<number>(0);
+  const [stats, setStats] = useState({
+    completed: 0,
+    total: 0,
+    percent: 0,
+    avgScore: 0,
+    hours: 0,
+  });
 
   useEffect(() => {
     checkUser();
@@ -21,7 +29,6 @@ export default function CertificatePage() {
       month: 'long',
       day: 'numeric'
     }));
-    setTotalHours(62); // Placeholder - calculate from actual data
   }, []);
 
   const checkUser = async () => {
@@ -30,6 +37,18 @@ export default function CertificatePage() {
       router.push('/');
     } else {
       setUser(user);
+      const total = curriculum.reduce(
+        (n, ch) => n + ch.subsections.length,
+        0
+      );
+      const summary = getProgressSummary(getProgress(user.id));
+      setStats({
+        completed: summary.completed,
+        total,
+        percent: total > 0 ? Math.round((summary.completed / total) * 100) : 0,
+        avgScore: summary.avgScore,
+        hours: Math.round((summary.seconds / 3600) * 10) / 10,
+      });
     }
     setLoading(false);
   };
@@ -89,7 +108,7 @@ export default function CertificatePage() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(14);
     doc.setTextColor(128, 124, 101);
-    doc.text(`Completed all 62 lessons • ${totalHours} hours of learning`, 148.5, 140, { align: 'center' });
+    doc.text(`Completed ${stats.completed} of ${stats.total} lessons • ${stats.avgScore}% average quiz score • ${stats.hours} hours of learning`, 148.5, 140, { align: 'center' });
 
     // Date
     doc.setFontSize(12);
@@ -141,6 +160,14 @@ export default function CertificatePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Certificate Display */}
           <div className="lg:col-span-2">
+            {stats.percent < 100 && (
+              <div className="premium-card p-4 mb-6 bg-accent-mustard/10 border-2 border-accent-mustard/40 animate-fade-in">
+                <p className="text-olive-800 font-semibold text-center">
+                  Course in progress — you have completed {stats.completed} of {stats.total} lessons ({stats.percent}%).
+                  Finish all quizzes to earn your Certificate of Completion.
+                </p>
+              </div>
+            )}
             <div
               ref={certificateRef}
               className="premium-card p-8 animate-fade-in bg-gradient-to-br from-olive-50 to-white"
@@ -168,7 +195,11 @@ export default function CertificatePage() {
                   <h2 className="text-3xl font-bold text-olive-900">
                     {user?.email?.split('@')[0] || 'Student'}
                   </h2>
-                  <p className="text-lg text-olive-600">has successfully completed the</p>
+                  <p className="text-lg text-olive-600">
+                    {stats.percent === 100
+                      ? 'has successfully completed the'
+                      : 'is progressing through the'}
+                  </p>
                   <h3 className="text-2xl font-bold text-olive-900">
                     Algebra 1 Course
                   </h3>
@@ -178,17 +209,17 @@ export default function CertificatePage() {
                 <div className="grid grid-cols-3 gap-4 mb-8">
                   <div className="bg-white rounded-xl p-4 text-center border-2 border-olive-200">
                     <Trophy className="w-8 h-8 text-accent-mustard mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-olive-900">62</p>
+                    <p className="text-2xl font-bold text-olive-900">{stats.completed}/{stats.total}</p>
                     <p className="text-sm text-olive-600">Lessons</p>
                   </div>
                   <div className="bg-white rounded-xl p-4 text-center border-2 border-olive-200">
                     <Award className="w-8 h-8 text-accent-coral mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-olive-900">100%</p>
+                    <p className="text-2xl font-bold text-olive-900">{stats.percent}%</p>
                     <p className="text-sm text-olive-600">Complete</p>
                   </div>
                   <div className="bg-white rounded-xl p-4 text-center border-2 border-olive-200">
                     <Calendar className="w-8 h-8 text-accent-teal mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-olive-900">{totalHours}h</p>
+                    <p className="text-2xl font-bold text-olive-900">{stats.hours}h</p>
                     <p className="text-sm text-olive-600">Learning</p>
                   </div>
                 </div>
@@ -224,19 +255,19 @@ export default function CertificatePage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-status-completed" />
-                  <span className="text-olive-700">Completed all 11 chapters</span>
+                  <span className="text-olive-700">Completed {stats.completed} of {stats.total} lessons</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-status-completed" />
-                  <span className="text-olive-700">Mastered 62 lessons</span>
+                  <span className="text-olive-700">{stats.percent}% course completion</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-status-completed" />
-                  <span className="text-olive-700">Achieved 100% completion</span>
+                  <span className="text-olive-700">{stats.avgScore}% average quiz score</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-status-completed" />
-                  <span className="text-olive-700">Dedicated {totalHours} hours</span>
+                  <span className="text-olive-700">Dedicated {stats.hours} hours</span>
                 </div>
               </div>
             </div>

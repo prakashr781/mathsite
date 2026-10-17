@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { curriculum, getSubsectionById } from '@/lib/curriculum';
 import { getQuestionsForSubsection, type QuizQuestion } from '@/lib/questionBank';
+import { getProgress, markSubsectionComplete } from '@/lib/progress';
+import { getExamplesForSubsection } from '@/lib/subsectionExamples';
 import MiniGraph from '@/components/MiniGraph';
 import { BookOpen, ArrowLeft, CheckCircle, Circle, Play, CheckSquare, XCircle, Award } from 'lucide-react';
 import Image from 'next/image';
@@ -55,8 +57,7 @@ export default function LessonPage() {
     setQuizQuestions(questions);
     
     // Check if already completed
-    // TODO: Fetch from Supabase
-    setCompleted(false);
+    setCompleted(!!getProgress(user?.id)[subsectionId]);
   };
 
   const startTimer = () => {
@@ -82,17 +83,15 @@ export default function LessonPage() {
   };
 
   const handleMarkComplete = async () => {
-    // TODO: Update Supabase with completion status
+    markSubsectionComplete(
+      subsectionId,
+      score,
+      quizQuestions.length,
+      timeSpent,
+      user?.id
+    );
     setCompleted(true);
-    
-    // Check if all 62 subsections are completed
-    // If so, redirect to certificate page
-    const allCompleted = true; // Placeholder
-    if (allCompleted) {
-      router.push('/certificate');
-    } else {
-      router.push('/curriculum/algebra-1');
-    }
+    router.push('/certificate');
   };
 
   const formatTime = (seconds: number) => {
@@ -243,18 +242,23 @@ export default function LessonPage() {
                   Step-by-Step Examples
                 </h4>
                 <div className="space-y-3">
-                  <div className="bg-white border-2 border-olive-200 rounded-xl p-4">
-                    <p className="font-semibold text-olive-900 mb-2">Example 1:</p>
-                    <p className="text-olive-700 text-sm">
-                      Solve the equation step by step, applying the concepts learned.
-                    </p>
-                  </div>
-                  <div className="bg-white border-2 border-olive-200 rounded-xl p-4">
-                    <p className="font-semibold text-olive-900 mb-2">Example 2:</p>
-                    <p className="text-olive-700 text-sm">
-                      Practice with different scenarios to reinforce understanding.
-                    </p>
-                  </div>
+                  {getExamplesForSubsection(subsectionId).map((example, index) => (
+                    <div
+                      key={index}
+                      className="bg-white border-2 border-olive-200 rounded-xl p-4"
+                    >
+                      <p className="font-semibold text-olive-900 mb-2">
+                        Example {index + 1}: {example.title}
+                      </p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        {example.steps.map((step, stepIndex) => (
+                          <li key={stepIndex} className="text-olive-700 text-sm">
+                            {step}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="bg-gradient-to-r from-accent-mustard/20 to-accent-coral/20 rounded-xl p-4 mt-6">
