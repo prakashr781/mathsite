@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { curriculum } from '@/lib/curriculum';
+import { getProgress, getProgressSummary } from '@/lib/progress';
 import { BookOpen, Clock, CheckCircle, Circle, LogOut, Trophy, TrendingUp } from 'lucide-react';
 
 interface UserStats {
@@ -36,8 +38,8 @@ export default function Dashboard() {
       id: 'algebra-1',
       title: 'Algebra 1',
       description: 'Master the fundamentals of algebra including linear equations, functions, and quadratic equations.',
-      chapters: 11,
-      lessons: 62,
+      chapters: curriculum.length,
+      lessons: curriculum.reduce((sum, ch) => sum + ch.subsections.length, 0),
       featured: true,
       color: 'from-olive-600 to-olive-800',
     },
@@ -63,7 +65,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     checkUser();
-    fetchUserStats();
   }, []);
 
   const checkUser = async () => {
@@ -72,17 +73,25 @@ export default function Dashboard() {
       router.push('/');
     } else {
       setUser(user);
+      fetchUserStats(user.id);
     }
     setLoading(false);
   };
 
-  const fetchUserStats = async () => {
-    // TODO: Fetch actual stats from Supabase
-    // For now, using placeholder data
+  const fetchUserStats = (userId: string) => {
+    const summary = getProgressSummary(getProgress(userId));
+    const totalLessons = curriculum.reduce(
+      (sum, ch) => sum + ch.subsections.length,
+      0
+    );
+    const completedPercentage =
+      totalLessons > 0
+        ? Math.round((summary.completed / totalLessons) * 100)
+        : 0;
     setStats({
-      totalHours: 12.5,
-      completedPercentage: 15,
-      pendingPercentage: 85,
+      totalHours: Math.round((summary.seconds / 3600) * 10) / 10,
+      completedPercentage,
+      pendingPercentage: 100 - completedPercentage,
     });
   };
 

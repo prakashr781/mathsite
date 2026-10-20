@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { curriculum, Chapter, Subsection } from '@/lib/curriculum';
+import { getProgress } from '@/lib/progress';
 import { BookOpen, ChevronRight, CheckCircle, Circle, ArrowLeft, Menu, X } from 'lucide-react';
 
 export default function Algebra1Curriculum() {
@@ -16,7 +17,6 @@ export default function Algebra1Curriculum() {
 
   useEffect(() => {
     checkUser();
-    fetchProgress();
   }, []);
 
   const checkUser = async () => {
@@ -25,14 +25,9 @@ export default function Algebra1Curriculum() {
       router.push('/');
     } else {
       setUser(user);
+      setCompletedSubsections(new Set(Object.keys(getProgress(user.id))));
     }
     setLoading(false);
-  };
-
-  const fetchProgress = async () => {
-    // TODO: Fetch actual progress from Supabase
-    // For now, using placeholder data
-    setCompletedSubsections(new Set(['1-1', '1-2']));
   };
 
   const toggleChapter = (chapterId: string) => {
@@ -79,6 +74,11 @@ export default function Algebra1Curriculum() {
   }
 
   const overallProgress = calculateOverallProgress();
+  const totalLessons = curriculum.reduce((sum, ch) => sum + ch.subsections.length, 0);
+  const completedLessons = curriculum.reduce(
+    (sum, ch) => sum + ch.subsections.filter(s => completedSubsections.has(s.id)).length,
+    0
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-olive-50 via-white to-accent-lavender/20">
@@ -232,7 +232,7 @@ export default function Algebra1Curriculum() {
                   <p className="text-sm text-olive-600">Chapters</p>
                 </div>
                 <div className="bg-olive-50 rounded-xl p-4 text-center">
-                  <p className="text-3xl font-bold text-olive-900">62</p>
+                  <p className="text-3xl font-bold text-olive-900">{totalLessons}</p>
                   <p className="text-sm text-olive-600">Lessons</p>
                 </div>
                 <div className="bg-olive-50 rounded-xl p-4 text-center">
@@ -241,7 +241,7 @@ export default function Algebra1Curriculum() {
                 </div>
                 <div className="bg-olive-50 rounded-xl p-4 text-center">
                   <p className="text-3xl font-bold text-olive-900">
-                    {62 - Math.round((overallProgress / 100) * 62)}
+                    {totalLessons - completedLessons}
                   </p>
                   <p className="text-sm text-olive-600">Remaining</p>
                 </div>
