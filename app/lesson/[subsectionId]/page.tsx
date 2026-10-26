@@ -203,7 +203,7 @@ export default function LessonPage() {
               {subsection.pageRange && (
                 <div className="space-y-4 mb-6">
                   <h3 className="text-lg font-semibold text-olive-900 mb-4">
-                    Book Pages {subsection.pageRange[0]} - {subsection.pageRange[1]}
+                    Book Pages {subsection.pageRange[0] - 1} - {subsection.pageRange[1] - 1}
                   </h3>
                   {Array.from(
                     { length: subsection.pageRange[1] - subsection.pageRange[0] + 1 },
